@@ -1,5 +1,3 @@
-import datetime
-import time
 import pandas as pd
 
 def get_query(ticker, period1, period2, interval):
@@ -20,15 +18,4 @@ def download_dataset(tickers, period1, period2, interval, filename):
         df_stocks[ticker] = df_this["Close"].round(decimals=3)
 
     #save df_stocks
-    df_stocks.to_csv(fr'Data\{filename}.csv', index = False, sep=';')
-
-
-#DEFINE PARAMETERS
-tickers = sorted(["VRTX", "ASML", "AMD", "SBUX", "NFLX", "TSLA", "QCOM", "DLTR", "AMGN", "MTCH"])
-period1 = int(time.mktime(datetime.datetime(2011,1,1,1,1).timetuple()))
-period2 = int(time.mktime(datetime.datetime(2020,12,31,23,59).timetuple()))
-interval = "1wk"
-filename = "data01"
-
-#DOWNLOAD and SAVE the data
-download_dataset(tickers, period1, period2, interval, filename)
+    df_stocks.to_pickle("Data/" + filename)

@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-import time
 
-def get_TARMOM_and_R(file_name):
-    data = pd.read_csv('Data\\' + file_name, delimiter=';').iloc[:, 1:]
+
+def get_TARMOM_and_R(dataset):
+    data = dataset.drop(columns = ["Date"])
     returns = data.pct_change() + 1
     returns = returns.iloc[1:, :]
     corr_matrix = returns.corr(method='pearson').to_numpy()
@@ -81,45 +81,10 @@ def weighted_loss_function(x, TARMOM, R, N_OUTCOMES, weights):
 
     return loss
 
+def generate_scenario(dataset, N_OUTCOMES):
+    TARMOM, R = get_TARMOM_and_R(dataset)
+    N_STOCKS = get_number_of_stocks(TARMOM)
 
-TARMOM, R = get_TARMOM_and_R("data01.csv")
-N_STOCKS = get_number_of_stocks(TARMOM)
-
-N_OUTCOMES = 3
-starting_values = np.random.random_sample(size=(N_STOCKS * N_OUTCOMES))*0.04 + 0.98
-result = minimize(loss_function, starting_values, args=(TARMOM, R,N_OUTCOMES))
-
-for N_OUTCOMES in np.array([3,5,7,10,15,30]):
-    starting_values = np.random.random_sample(size=(N_STOCKS * N_OUTCOMES))*0.04 + 0.98
-    result = minimize(loss_function, starting_values, args=(TARMOM, R,N_OUTCOMES))
-    print(result.success, result.fun)
-
-
-
-
-
-weights =np.array([1,1,1,1,0])
-print()
-print(weights)
-for N_OUTCOMES in np.array([3,5,7,10,15,30]):
-    starting_values = np.random.random_sample(size=(N_STOCKS * N_OUTCOMES))*0.04 + 0.98
-    start1 = time.time()
-    result = minimize(loss_function, starting_values, args=(TARMOM, R, N_OUTCOMES))
-    end1 = time.time()
-    result_w = minimize(weighted_loss_function, starting_values, args=(TARMOM, R,N_OUTCOMES, weights))
-    end2 = time.time()
-    print(N_OUTCOMES, ": ", result.success, result.fun, end1-start1,",  |  weighted:", result_w.success, result_w.fun, end2-end1)
-
-
-
-
-#comparison of diag and non-diag
-print()
-for N_OUTCOMES in np.array([50]):
-    starting_values = np.random.random_sample(size=(N_STOCKS * N_OUTCOMES))*0.04 + 0.98
-    start1 = time.time()
-    result = minimize(loss_function, starting_values, args=(TARMOM, R, N_OUTCOMES))
-    end1 = time.time()
-    result_w = minimize(loss_function_diag, starting_values, args=(TARMOM, R,N_OUTCOMES))
-    end2 = time.time()
-    print(N_OUTCOMES, ": ", result.success, result.fun, end1-start1,",  |  DIAG:", result_w.success, result_w.fun, end2-end1)
+    starting_values = np.random.random_sample(size=(N_STOCKS * N_OUTCOMES)) * 0.04 + 0.98
+    result = minimize(loss_function_diag, starting_values, args=(TARMOM, R, N_OUTCOMES))
+    return result
