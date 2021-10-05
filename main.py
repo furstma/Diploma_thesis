@@ -85,7 +85,7 @@ generator = tree_generator.Generator(tickers, first_valid_date, last_valid_date,
 
 compact_tree = generator.generate_compact_tree(3, 20)
 
-
+compact_tree[0].loc[0,"AMD"]
 # TODO:
 # 1) identify correct tree structure
 # 2) implement tree_generator

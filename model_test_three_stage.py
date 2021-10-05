@@ -42,13 +42,19 @@ second_stage_vars = pulp.LpVariable.dicts(
     "x_2", (scenarios, stocks), lowBound=0, cat="Continuous"
 )
 
+u_2 = pulp.LpVariable.dicts("u_2", scenarios, cat="Continuous")
+
+nnp_2 = pulp.LpVariable.dicts(
+    "nnp_2", (scenarios, scenarios), lowBound=0, cat="Continuous"
+)
+
 third_stage_vars = pulp.LpVariable.dicts(
     "x_3", (scenarios, scenarios, stocks), lowBound=0, cat="Continuous"
 )
 
 
 
-Q_3 = [ - pulp.lpSum(third_stage_vars[j])  for j in scenarios]
+Q_3 = [dict(zip(scenarios, [- pulp.lpSum(third_stage_vars[j][i])  for i in scenarios])) for j in scenarios]
 Q_3 = dict(zip(scenarios, Q_3))
 
 R_3 = [pulp.lpSum(
@@ -56,6 +62,7 @@ R_3 = [pulp.lpSum(
             probs[j] * ( (1 - lmbda) * Q_3[j][i] + (lmbda / alpha) * nnp_1[j][i])
             for i in scenarios
         ]) for j in scenarios]
+R_3 = dict(zip(scenarios, R_3))
 
 Q_2 = [ - pulp.lpSum(second_stage_vars[j]) + pulp.lpSum([lmbda * u_2[j], R_3[j]]) for j in scenarios]
 Q_2 = dict(zip(scenarios, Q_2))
@@ -93,6 +100,19 @@ for j in scenarios:
         nnp_1[j] >= Q_2[j] - u_1,
         "non-negative part constraint in " + j,
     )
+
+for j in scenarios:
+    for i in scenarios:
+        my_problem += (
+            pulp.lpSum(third_stage_vars[j][i]) == pulp.lpSum([returns[2][j][s] * second_stage_vars[s] for s in stocks]),
+            f"Q_3 budget in {j}-{i}" ,
+        )
+
+        my_problem += (
+            nnp_1[j] >= Q_2[j] - u_1,
+            "non-negative part constraint in " + j,
+        )
+
 
 print(my_problem)
 
