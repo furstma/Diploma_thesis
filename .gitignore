@@ -130,6 +130,6 @@ dmypy.json
 
 
 
-.pkl
+*.pkl
 .idea/
-.lp
+*.lp
