@@ -1,9 +1,7 @@
 import time
 import datetime
 
-import pandas as pd
-
-from data_download_utils import download_dataset
+from Model.data_download_utils import download_dataset
 
 
 #DEFINE PARAMETERS
@@ -19,8 +17,7 @@ download_dataset(tickers, period1, period2, interval, filename)
 
 
 
-from scenario_generator_MM import *
-
+from Model.scenario_generator_MM import *
 
 
 TARMOM, R = get_TARMOM_and_R("data01.csv")
@@ -34,10 +31,6 @@ for N_OUTCOMES in np.array([3,5,7,10,15,30]):
     starting_values = np.random.random_sample(size=(N_STOCKS * N_OUTCOMES))*0.04 + 0.98
     result = minimize(loss_function, starting_values, args=(TARMOM, R,N_OUTCOMES))
     print(result.success, result.fun)
-
-
-
-
 
 weights =np.array([1,1,1,1,0])
 print()
@@ -73,25 +66,27 @@ for N_OUTCOMES in np.array([10]):
 # main workflow scheme
 import time
 import datetime
-import tree_generator
+from Model import tree_generator
+from Model.model import Model
 
-tickers = sorted(["VRTX", "ASML", "AMD", "SBUX", "NFLX", "TSLA", "QCOM", "DLTR", "AMGN", "MTCH"])
+stocks = sorted(["VRTX", "ASML", "AMD", "SBUX", "NFLX", "TSLA", "QCOM", "DLTR", "AMGN", "MTCH"])
 first_valid_date = int(time.mktime(datetime.datetime(2011,1,1,1,1).timetuple()))
 last_valid_date = int(time.mktime(datetime.datetime(2020,12,31,23,59).timetuple()))
 interval = "1wk"
 random = False
 
-generator = tree_generator.Generator(tickers, first_valid_date, last_valid_date, random)
+generator = tree_generator.Generator(stocks, first_valid_date, last_valid_date, random)
 
-compact_tree = generator.generate_compact_tree(3, 20)
+scenarios = generator.generate_scenarios([10,8,6])
 
-compact_tree[0].loc[0,"AMD"]
-# TODO:
-# 1) identify correct tree structure
-# 2) implement tree_generator
+model = Model(scenarios, stocks, {"lmbda": 0.3, "alpha": 0.1, "transaction_cost": 0.02})
 
+model.print_scenarios()
 
-# ad 1)
-#   - generate_compact_tree() returns tree in a compact format:
-#       list(first_stage_scen, second_stage_scen, ... , last_stage_scen)
-#       where ith_stage_scen is pandas dataframe with rows "s1" ... "sN" and cols "STOCK1" ... "STOCKN".
+model.print()
+
+#model.save_lp_file("10x8x6_test")
+
+model.solve()
+
+model.print_results_in_tree()

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
-from data_download_utils import download_dataset
-from scenario_generator_MM import generate_scenario
+from Model.data_download_utils import download_dataset
+from Model.scenario_generator_MM import generate_scenario
 
 
 def initialize_dataset(tickers, first_valid_date, last_valid_date):
@@ -22,13 +22,14 @@ class Generator:
 
         self.dataset = initialize_dataset(tickers, first_valid_date, last_valid_date)
 
-    def generate_compact_tree(self, n_stages: int, n_scenarios: int):
+    def generate_scenarios(self, branching: [int]):
         compact_tree = []
-        for i in range(n_stages-1):
-            result = generate_scenario(self.dataset, n_scenarios)
-            scenario_array = result.x.reshape((n_scenarios, -1))
+        for i in branching:
+            result = generate_scenario(self.dataset, i)
+            scenario_array = result.x.reshape((i, -1))
             scenario = pd.DataFrame(scenario_array, columns=self.tickers)
             compact_tree.append(scenario)
+            print("Branching " + str(i) + " generated.")
         return compact_tree
 
 
