@@ -19,7 +19,7 @@ def get_TARMOM_and_R(dataset):
     moments = np.column_stack((mean,
                                np.sum(np.power(returns - mean, 2), axis=0) / returns.shape[0],
                                np.sum(np.power(returns - mean, 3), axis=0) / returns.shape[0],
-                               np.sum(np.power(returns - mean, 3), axis=0) / returns.shape[0]
+                               np.sum(np.power(returns - mean, 4), axis=0) / returns.shape[0]
                                ))
     return moments, corr_matrix
 
@@ -63,7 +63,7 @@ def loss_function_diag(x, TARMOM, R, N_OUTCOMES):
     return loss
 
 
-def weighted_loss_function(x, TARMOM, R, N_OUTCOMES, weights):
+def weighted_loss_function_diag(x, TARMOM, R, N_OUTCOMES, weights):
     x= np.reshape(x, (-1,N_OUTCOMES))
     mean = np.mean(x, axis=1)
     variance = np.sum(np.power(x - np.tile(mean, (N_OUTCOMES, 1)).transpose(), 2), axis=1) / N_OUTCOMES
@@ -76,14 +76,14 @@ def weighted_loss_function(x, TARMOM, R, N_OUTCOMES, weights):
            weights[1]*np.sum(np.power(variance - TARMOM[:, 1], 2)) + \
            weights[2]*np.sum(np.power(third - TARMOM[:, 2], 2)) + \
            weights[3]*np.sum(np.power(fourth - TARMOM[:, 3], 2)) + \
-           weights[4]*np.sum(np.power(R_discrete - R, 2))
+           weights[4]*np.sum(np.power(np.triu(R_discrete - R,1), 2))
 
     return loss
 
-def generate_scenario(dataset, N_OUTCOMES):
+def generate_scenario(dataset, N_OUTCOMES, weights):
     TARMOM, R = get_TARMOM_and_R(dataset)
     N_STOCKS = get_number_of_stocks(TARMOM)
 
     starting_values = np.random.random_sample(size=(N_STOCKS * N_OUTCOMES)) * 0.04 + 0.98
-    result = minimize(loss_function_diag, starting_values, args=(TARMOM, R, N_OUTCOMES))
+    result = minimize(weighted_loss_function_diag, starting_values, args=(TARMOM, R, N_OUTCOMES, weights))
     return result

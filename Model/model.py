@@ -142,3 +142,7 @@ class Model():
             values = ", ".join([" ".join([key + ":", str("{:.3f}".format(node.x[key].varValue))])
                                 for key in node.x.keys()])
             print("%s%s" % (pre, str(node.name) + ": " + values))
+
+    def get_first_stage_result(self):
+        res = [(key, self.root.x[key].varValue) for key in self.root.x.keys()]
+        return dict(res)
